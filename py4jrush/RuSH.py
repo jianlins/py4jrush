@@ -32,7 +32,7 @@ import sys
 import os.path
 from typing import Union, List
 
-from PyFastNER import Span
+from Span import Span
 from py4j.java_gateway import JavaGateway
 import os
 from pathlib import Path

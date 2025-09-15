@@ -83,7 +83,7 @@ setup(
     author='Jianlin',
     author_email='jianlinshi.cn@gmail.com',
     url='https://github.com/jianlins/py4jrush',  # update to new repo URL
-    keywords=['PyFastNER', 'ner', 'regex'],
+    keywords=['sentence segmentation', 'sentence splitting'],
     long_description=long_description,
     classifiers=[
         'Programming Language :: Python :: 3',
