@@ -9,11 +9,6 @@ concurrency:
 jobs:
   build_wheels:
     name: Test on ${{ matrix.python-version }}-${{ matrix.os }}
-    if: >-
-      github.event_name == 'schedule' ||
-      github.event_name == 'workflow_dispatch' ||
-      (github.event_name == 'pull_request' &&
-      contains(github.event.pull_request.labels.*.name, 'Build System'))
     runs-on: ${{ matrix.os }}
     strategy:
       # Ensure that a wheel builder finishes even if another fails
