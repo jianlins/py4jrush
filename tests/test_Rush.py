@@ -22,6 +22,35 @@ class TestRuSH(unittest.TestCase):
         self.pwd = os.path.dirname(os.path.abspath(__file__))
         self.rush = RuSH(str(os.path.join(self.pwd, 'rush_rules.tsv')), enable_logger=True)
 
+    def test_default_rules_loading(self):
+        """Test that default rules are loaded correctly when no rules parameter is provided."""
+        # Test with default rules (should load from conf/rush_rules.tsv)
+        rush_default = RuSH(enable_logger=True)
+        
+        # Test with explicit rules file
+        rush_explicit = RuSH(str(os.path.join(self.pwd, 'rush_rules.tsv')), enable_logger=True)
+        
+        # Both should segment the same text similarly
+        input_str = 'Can Mr. K check it. Look good.'
+        
+        sentences_default = rush_default.segToSentenceSpans(input_str)
+        sentences_explicit = rush_explicit.segToSentenceSpans(input_str)
+        
+        # Both should produce the same number of sentences
+        self.assertEqual(len(sentences_default), len(sentences_explicit))
+        
+        # Verify they split at the same positions (content may vary slightly due to different rules)
+        self.assertEqual(len(sentences_default), 2)
+        self.assertEqual(sentences_default[0].begin, 0)
+        self.assertTrue(sentences_default[0].end > 15)  # Should capture "Can Mr. K check it."
+        self.assertTrue(sentences_default[1].begin > 15)  # Should start with "Look good."
+        
+        # Clean up
+        rush_default.shutdownJVM()
+        rush_explicit.shutdownJVM()
+        
+        print("✅ Default rules loading test passed!")
+
     def test1(self):
         input_str = 'Can Mr. K check it. Look\n good.\n'
         sentences = self.rush.segToSentenceSpans(input_str)

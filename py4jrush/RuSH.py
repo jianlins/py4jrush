@@ -53,7 +53,7 @@ class RuSH:
         """Initialize RuSH sentence segmenter.
         
         Args:
-            rules: Segmentation rules as string or list of strings
+            rules: Segmentation rules as string or list of strings. If empty, uses default rules from conf/rush_rules.tsv
             min_sent_chars: Minimum sentence length in characters
             enable_logger: Whether to enable logging
             py4jar: Path to py4j JAR file (optional)
@@ -78,6 +78,16 @@ class RuSH:
         self.gateway = JavaGateway.launch_gateway(jarpath=py4jar,
                                                  classpath=rushjar,
                                                  java_path=java_path, die_on_exit=True, use_shell=False)
+        
+        # Load default rules if none provided
+        if not rules or (isinstance(rules, list) and len(rules) == 0):
+            default_rules_path = os.path.join(package_dir, 'conf', 'rush_rules.tsv')
+            if Path(default_rules_path).exists():
+                with open(default_rules_path, 'r', encoding='utf-8') as f:
+                    rules = f.read()
+            else:
+                raise FileNotFoundError(f"Default rules file not found at {default_rules_path}")
+        
         if isinstance(rules, List):
             rules = '\n'.join(rules)
         self.jrush = self.gateway.jvm.edu.utah.bmi.nlp.rush.core.RuSH(rules)
