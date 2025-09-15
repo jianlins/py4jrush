@@ -9,12 +9,8 @@ concurrency:
 jobs:
 
   build_wheels:
-    name: Build wheel on ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest, windows-latest, macos-13]
+    name: Build wheel and sdist
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -35,13 +31,20 @@ jobs:
       - name: Build wheel and sdist
         run: |
           python -m build
+      - name: Validate built packages
+        run: |
+          echo "Listing built packages:"
+          ls -la dist/
+          echo "Validating package integrity:"
+          python -m pip install twine
+          python -m twine check dist/*
       - name: Run tests
         run: |
           python -m unittest discover tests
       - name: Upload wheel and sdist
         uses: actions/upload-artifact@v4
         with:
-          name: dist-${{ matrix.os }}
+          name: dist-packages
           path: dist/*
 
 
@@ -54,17 +57,18 @@ jobs:
       id-token: write
     steps:
       - uses: actions/setup-python@v4
-      - name: Download all wheel and sdist artifacts
+      - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
-          path: dist
-          pattern: dist-*
-          merge-multiple: true
-      - name: Prepare dist folder
+          name: dist-packages
+          path: final_dist
+      - name: Validate downloaded packages
         run: |
-          mkdir -p final_dist
-          find dist -name "*" -type f \( -name "*.whl" -o -name "*.tar.gz" \) -exec mv {} final_dist/ \;
-          ls -la final_dist
+          echo "Downloaded packages:"
+          ls -la final_dist/
+          echo "Validating package integrity before publishing:"
+          python -m pip install twine
+          python -m twine check final_dist/*
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
@@ -78,17 +82,15 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0  # Needed for git describe
-      - name: Download all wheel and sdist artifacts
+      - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
-          path: dist
-          pattern: dist-*
-          merge-multiple: true
-      - name: Prepare release files
+          name: dist-packages
+          path: release_files
+      - name: List release files
         run: |
-          mkdir -p release_files
-          find dist -name "*" -type f \( -name "*.whl" -o -name "*.tar.gz" \) -exec cp {} release_files/ \;
-          ls -la release_files
+          echo "Release files:"
+          ls -la release_files/
       - name: Get release tag
         id: get_tag
         run: |

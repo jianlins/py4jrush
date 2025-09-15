@@ -107,7 +107,6 @@ setup(
     license='Apache License',
     zip_safe=False,
     install_requires=parse_requirements('requirements.txt'),
-    tests_require='pytest',
     cmdclass={
         'install': PostInstallCommand,
     }
