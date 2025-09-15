@@ -1,48 +1,58 @@
 name: run pytests
 on:
-  push:
-  pull_request:
-  workflow_dispatch:
+  [push,pull_request,workflow_dispatch]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
   cancel-in-progress: true
 
 jobs:
-  test:
-    name: Test on ${{ matrix.os }} with Python ${{ matrix.python-version }}
-    runs-on: ${{ matrix.os }}
+  build_wheels:
+    name: Build wheel for ${{ matrix.python-version }}-${{ matrix.buildplat[1] }}
+    if: >-
+      github.event_name == 'schedule' ||
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'pull_request' &&
+      contains(github.event.pull_request.labels.*.name, 'Build System'))
+    runs-on: ${{ matrix.buildplat[0] }}
     strategy:
+      # Ensure that a wheel builder finishes even if another fails
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-13]
-        python-version: ["3.9", "3.10", "3.11"]
+        # Github Actions doesn't support pairing matrix values together, let's improvise
+        # https://github.com/github/feedback/discussions/7835#discussioncomment-1769026
+        buildplat:
+          - [ ubuntu-latest, ubuntu-latest ]
+          - [ macos-latest, macos-latest ]
+          - [ windows-latest, windows-latest ]
+        #        spacy doesn't compile win32
+        #        python: ["cp36"] # Note: Wheels not needed for PyPy
+        python-version: [ "3.9","3.10.x","3.11.x"] # Note: Wheels not needed for PyPy
     timeout-minutes: 45
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
-      - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/checkout@v5
+      - name: set up python
+        uses: actions/setup-python@v6
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: ${{ matrix.python-version }}   
           cache: 'pip'   
           cache-dependency-path: 'requirements.txt'
-      - name: Set up JDK
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version: '8'
+
+      # Removed redundant python3 pip upgrade step for cross-platform compatibility
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip          
           pip install pytest
           pip install -r requirements.txt
-      - name: Install package in development mode
-        run: |
-          # Install without running PostInstallCommand to avoid JDK installation issues in CI
-          pip install -e . --no-deps
-      - name: Run tests
+          pip install .
+
+      - name:  pytests
         run: |
           python --version
-          java -version
-          pytest tests -v
+          pytest tests
+
+
+  
+
