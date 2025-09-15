@@ -37,7 +37,7 @@ jobs:
           python -m build
       - name: Run tests
         run: |
-          python -m unittest discover
+          python -m unittest discover tests
       - name: Upload wheel and sdist
         uses: actions/upload-artifact@v4
         with:
