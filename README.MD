@@ -31,6 +31,44 @@ When you run `pip install py4jrush`, the installer will automatically check for 
 pip install py4jrush
 ```
 
+## Development and Release Process
+
+This project uses automated workflows for building, testing, and releasing. Here's how it works:
+
+### Automated Release Workflow
+
+The project has an automated release workflow that:
+1. **Automatically bumps version numbers** using semantic versioning
+2. **Builds and tests** the package across multiple environments  
+3. **Publishes to PyPI** with proper validation
+4. **Creates GitHub releases** with built artifacts
+
+### How to Release
+
+#### Option 1: Manual Workflow Trigger (Recommended)
+1. Go to the **Actions** tab in GitHub
+2. Select **Build and Publish Python Package** workflow
+3. Click **Run workflow** and configure:
+   - **Publish to PyPI**: `true` (to actually publish)
+   - **Create GitHub release**: `true` (to create a release)
+   - **Version bump type**: Choose `patch`, `minor`, or `major`
+
+#### Option 2: GitHub Release Creation
+Create a new release in the GitHub UI, and the workflow will automatically trigger.
+
+### Version Bumping Strategy
+- **patch** (1.0.10 → 1.0.11): Bug fixes, small changes
+- **minor** (1.0.10 → 1.1.0): New features, backwards compatible
+- **major** (1.0.10 → 2.0.0): Breaking changes
+
+### Workflow Features
+- ✅ **Automatic version detection** from current VERSION file
+- ✅ **Smart version bumping** prevents conflicts with existing releases
+- ✅ **Multi-environment testing** (Python 3.9, 3.10, 3.11 on Ubuntu, Windows, macOS)
+- ✅ **PyPI validation** with twine before publishing
+- ✅ **Automatic VERSION file updates** after successful release 
+- ✅ **GitHub release creation** with built artifacts
+
 ## How to use
 
 A standalone RuSH class is available to be directly used in your code.
