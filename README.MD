@@ -74,6 +74,8 @@ Create a new release in the GitHub UI, and the workflow will automatically trigg
 A standalone RuSH class is available to be directly used in your code.
 From 1.0.4, pyRush adopt spaCy 3.x api to initiate an component.
 
+### Basic Usage
+
 ```python
 from py4jrush import RuSH
 input_str = "The patient was admitted on 03/26/08\n and was started on IV antibiotics elevation" +\
@@ -88,17 +90,59 @@ for sentence in sentences:
     print("Sentence({0}-{1}):\t>{2}<".format(sentence.begin, sentence.end, input_str[sentence.begin:sentence.end]))
 ```
 
-## Spacy Componentized py4jrush
+### Maximum Sentence Length Control
 
-Start from version 1.0.3, py4jrush adds Spacy compatible Sentencizer
-component: PyRuSHSentencizer.
+The RuSH class now supports a `max_sentence_length` parameter that automatically splits sentences exceeding a specified character limit. This is particularly useful for downstream NLP tasks that have input length constraints.
 
 ```python
-from py4jrush import PyRuSHSentencizer
-from spacy.lang.en import English
+from py4jrush import RuSH
 
-nlp = English()
-nlp.add_pipe("medspacy_py4jrush")
-doc = nlp("This is a sentence. This is another sentence.")
-print('\n'.join([str(s) for s in doc.sents]))
+# Initialize RuSH with maximum sentence length of 100 characters
+rush = RuSH('../conf/rush_rules.tsv', max_sentence_length=100, enable_logger=True)
+
+# Long sentence that will be automatically split
+long_text = "This is a very long clinical sentence that contains multiple medical concepts and exceeds the maximum length limit, so it will be intelligently split into smaller segments at appropriate boundaries like whitespace or punctuation marks to ensure each resulting sentence stays within the specified character limit."
+
+sentences = rush.segToSentenceSpans(long_text)
+for i, sentence in enumerate(sentences):
+    segment = long_text[sentence.begin:sentence.end]
+    print(f"Sentence {i} (length {len(segment)}): {segment}")
 ```
+
+#### Splitting Strategy
+
+When `max_sentence_length` is specified, RuSH uses an intelligent splitting strategy:
+
+1. **Whitespace preferred**: Splits at word boundaries when possible
+2. **Punctuation fallback**: Splits at punctuation marks (`,`, `;`, `.`, etc.) when no whitespace is available  
+3. **Force split**: Hard split at character limit when no good split points exist
+
+#### Parameters
+
+- `max_sentence_length` (Optional[int]): Maximum allowed sentence length in characters. If `None` (default), no length-based splitting is performed.
+- `enable_logger` (bool): When `True`, enables detailed logging of the splitting process.
+
+#### Example Output
+
+```
+Sentence 0 (length 98): This is a very long clinical sentence that contains multiple medical concepts and exceeds the 
+Sentence 1 (length 97): maximum length limit, so it will be intelligently split into smaller segments at appropriate 
+Sentence 2 (length 87): boundaries like whitespace or punctuation marks to ensure each resulting sentence 
+Sentence 3 (length 58): stays within the specified character limit.
+```
+
+### Constructor Parameters
+
+The RuSH class constructor accepts the following parameters:
+
+```python
+RuSH(rules='', min_sent_chars=5, enable_logger=False, py4jar=None, rushjar=None, java_path='java', max_sentence_length=None)
+```
+
+- **`rules`** (Union[str, List]): Path to segmentation rules file or list of rule strings
+- **`min_sent_chars`** (int): Minimum sentence length in characters (default: 5)
+- **`enable_logger`** (bool): Whether to enable logging (default: False)
+- **`py4jar`** (Optional[str]): Path to py4j JAR file (auto-detected if None)
+- **`rushjar`** (Optional[str]): Path to RuSH JAR file (auto-detected if None)  
+- **`java_path`** (str): Path to Java executable (default: 'java')
+- **`max_sentence_length`** (Optional[int]): Maximum sentence length in characters (default: None - no splitting)

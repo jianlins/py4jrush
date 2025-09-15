@@ -49,7 +49,7 @@ class RuSH:
     def __init__(self, rules: Union[str, List] = '', min_sent_chars: int = 5,
                  enable_logger: bool = False, py4jar: Optional[str] = None,
                  rushjar: Optional[str] = None,
-                 java_path: str = 'java') -> None:
+                 java_path: str = 'java', max_sentence_length: Optional[int] = None) -> None:
         """Initialize RuSH sentence segmenter.
         
         Args:
@@ -59,6 +59,7 @@ class RuSH:
             py4jar: Path to py4j JAR file (optional)
             rushjar: Path to RuSH JAR file (optional)
             java_path: Path to Java executable
+            max_sentence_length: Maximum sentence length in characters (optional)
         
         Raises:
             FileNotFoundError: If required JAR files are not found
@@ -88,6 +89,7 @@ class RuSH:
         else:
             self.logger = None
         self.min_sent_chars = min_sent_chars
+        self.max_sentence_length = max_sentence_length
 
     def segToSentenceSpans(self, text: str) -> List[Span]:
         """Segment text into sentence spans.
@@ -120,7 +122,113 @@ class RuSH:
                     span = RuSH.trim_gap(text, previous.end, span.begin)
                 if span is not None:
                     output[i] = span
+        
+        # Apply max_sentence_length splitting if specified
+        if self.max_sentence_length is not None and self.max_sentence_length > 0:
+            output = self._split_long_sentences(text, output)
+        
         return output
+
+    def _split_long_sentences(self, text: str, spans: List[Span]) -> List[Span]:
+        """Split sentences that exceed max_sentence_length.
+        
+        Args:
+            text: Original text being processed
+            spans: List of sentence spans to potentially split
+            
+        Returns:
+            List of spans with long sentences split appropriately
+        """
+        if not spans:
+            return spans
+            
+        result = []
+        
+        for span in spans:
+            sentence_text = text[span.begin:span.end]
+            sentence_length = len(sentence_text)
+            
+            if self.max_sentence_length is None or sentence_length <= self.max_sentence_length:
+                result.append(span)
+                continue
+                
+            # Need to split this sentence
+            if self.logger is not None:
+                self.logger.debug(f"Splitting long sentence of length {sentence_length}: '{sentence_text[:50]}...'")
+            
+            split_spans = self._split_sentence_at_length(text, span)
+            result.extend(split_spans)
+            
+        return result
+    
+    def _split_sentence_at_length(self, text: str, span: Span) -> List[Span]:
+        """Split a single sentence at appropriate points to respect max_sentence_length.
+        
+        Args:
+            text: Original text being processed
+            span: Sentence span to split
+            
+        Returns:
+            List of split spans
+        """
+        sentence_text = text[span.begin:span.end]
+        result = []
+        current_start = span.begin
+        
+        while current_start < span.end:
+            remaining_length = span.end - current_start
+            
+            if self.max_sentence_length is None or remaining_length <= self.max_sentence_length:
+                # Remaining text fits within limit
+                result.append(Span(current_start, span.end))
+                break
+                
+            # Find best split point within max_sentence_length
+            max_length = self.max_sentence_length if self.max_sentence_length is not None else span.end - current_start
+            split_point = self._find_split_point(text, current_start, 
+                                               min(current_start + max_length, span.end))
+            
+            if split_point <= current_start:
+                # No good split point found, force split at max length
+                max_length = self.max_sentence_length if self.max_sentence_length is not None else span.end - current_start
+                split_point = min(current_start + max_length, span.end)
+                
+            result.append(Span(current_start, split_point))
+            
+            if self.logger is not None:
+                split_text = text[current_start:split_point]
+                self.logger.debug(f"Split sentence part: '{split_text}' (length: {len(split_text)})")
+                
+            current_start = split_point
+            
+        return result
+    
+    def _find_split_point(self, text: str, start: int, max_end: int) -> int:
+        """Find the best point to split a sentence, preferring whitespace.
+        
+        Args:
+            text: Original text
+            start: Start position to search from
+            max_end: Maximum end position (inclusive)
+            
+        Returns:
+            Best split position
+        """
+        # Look for whitespace working backwards from max_end
+        for i in range(max_end - 1, start, -1):
+            if text[i].isspace():
+                # Found whitespace, split after it
+                return i + 1
+                
+        # Look for punctuation working backwards
+        sentence_end_chars = {'.', '!', '?', ';', ','}
+        for i in range(max_end - 1, start, -1):
+            if text[i] in sentence_end_chars:
+                # Found punctuation, split after it
+                return i + 1
+                
+        # No good split point found
+        return max_end
 
     def shutdownJVM(self) -> None:
         """Shutdown the Java Virtual Machine gateway."""
