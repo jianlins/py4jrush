@@ -25,6 +25,8 @@ The full text can be found
 
 ## Installation
 
+When you run `pip install py4jrush`, the installer will automatically check for Java JDK 8. If JDK 8 is not found, it will use the [install-jdk](https://pypi.org/project/install-jdk/) Python package to download and install JDK 8 for you. No manual Java setup is required.
+
 > pip install py4jrush
 
 ## How to use
@@ -58,8 +60,3 @@ nlp.add_pipe("medspacy_py4jrush")
 doc = nlp("This is a sentence. This is another sentence.")
 print('n'.join(\[str(s) for s in doc.sents\]))
 ```
-
-## A Colab Notebook Demo
-
-Feel free to try this runnable [Colab notebook
-Demo](https://colab.research.google.com/drive/1gX9MzZTQiPw8G3x_vUwZbiSXGtbI0uIX?usp=sharing)

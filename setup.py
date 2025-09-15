@@ -22,9 +22,28 @@ class PostInstallCommand(install):
     """Post-installation for installation mode."""
     def run(self):
         install.run(self)
-        # install jre 8 if java is absent
-        if find_executable('java') is None:
-            pass
+        import subprocess
+        import sys
+        try:
+            # Check if java is installed and is JDK 8
+            result = subprocess.run(['java', '-version'], capture_output=True, text=True)
+            version_output = result.stderr if result.stderr else result.stdout
+            if 'version "1.8' in version_output or 'version "8' in version_output:
+                print("JDK 8 is already installed.")
+                return
+            else:
+                print("Java is installed but not JDK 8. Installing JDK 8...")
+        except Exception:
+            print("Java is not installed. Installing JDK 8...")
+        try:
+            import jdk
+        except ImportError:
+            print("install-jdk not found, installing it...")
+            subprocess.check_call([sys.executable, '-m', 'pip', 'install', 'install-jdk'])
+            import jdk
+        print("Installing JDK 8 using install-jdk...")
+        jdk.install('8')
+        print("JDK 8 installation complete.")
 
 
 
@@ -92,6 +111,9 @@ setup(
             os.path.join('..', 'requirements.txt'),
             os.path.join('..', 'lib', '*.jar')
         ]
+    },
+    cmdclass={
+        'install': PostInstallCommand,
     },
             # url parameter already set above, remove duplicate
 )
