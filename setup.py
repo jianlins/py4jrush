@@ -1,29 +1,15 @@
 from setuptools import setup, dist
 from setuptools.extension import Extension
 from os import path
+import os
 from codecs import open
-from Cython.Build import cythonize
-import numpy,os
-import spacy, cymem, preshed
 from setuptools.command.install import install
 from distutils.spawn import find_executable
 
 dir_path = path.dirname(path.realpath(__file__))
 
-include_dirs = [dir_path + "/PyRuSH", dir_path,
-                numpy.get_include(),
-                path.dirname(spacy.__file__),
-                path.dirname(cymem.__file__),
-                path.dirname(preshed.__file__)]
-extensions = [
-    Extension(
-        'PyRuSH.StaticSentencizerFun',
-        sources=['PyRuSH/StaticSentencizerFun.pyx'],
-        include_dirs=include_dirs,
-        language='c++',
-        extra_compile_args=["-std=c++11"],
-    )
-]
+include_dirs = [dir_path + "/PyRuSH", dir_path]
+
 
 
 
@@ -71,13 +57,13 @@ COMPILER_DIRECTIVES = {
 
 
 setup(
-    name='pyrush-jre',
-    packages=['pyrush-jre'],  # this must be the same as the name above
+    name='py4jrush',
+    packages=['py4jrush'],  # this must be the same as the name above
     version=get_version(),
     description='A fast implementation of RuSH (Rule-based sentence Segmenter using Hashing).',
     author='Jianlin',
     author_email='jianlinshi.cn@gmail.com',
-    url='https://github.com/jianlins/PyRuSH',  # use the URL to the github repo
+    url='https://github.com/jianlins/py4jrush',  # update to new repo URL
     keywords=['PyFastNER', 'ner', 'regex'],
     long_description=long_description,
     classifiers=[
@@ -99,9 +85,13 @@ setup(
     zip_safe=False,
     include_package_data=True,
     install_requires=parse_requirements('requirements.txt'),
-    ext_modules=cythonize(extensions, compiler_directives=COMPILER_DIRECTIVES),
     tests_require='pytest',
-    package_data={'': ['*.pyx', '*.pxd', '*.so', '*.dll', '*.lib', '*.cpp', '*.c',
-                       '../conf/rush_rules.tsv','../requirements.txt'
-                       ,'../lib/*.jar']},
+    package_data={
+        'py4jrush': [
+            os.path.join('..', 'conf', 'rush_rules.tsv'),
+            os.path.join('..', 'requirements.txt'),
+            os.path.join('..', 'lib', '*.jar')
+        ]
+    },
+            # url parameter already set above, remove duplicate
 )

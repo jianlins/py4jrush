@@ -14,7 +14,7 @@
 import os
 import unittest
 
-from PyRuSH import RuSH
+from py4jrush import RuSH
 
 
 class TestRuSH(unittest.TestCase):

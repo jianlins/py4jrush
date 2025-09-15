@@ -27,8 +27,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import logging
-import logging.config
+from loguru import logger
+import sys
 import os.path
 from typing import Union, List
 
@@ -37,42 +37,6 @@ from py4j.java_gateway import JavaGateway
 import os
 from pathlib import Path
 
-
-def initLogger():
-    config_files = ['../../../conf/logging.ini', '../../conf/logging.ini', '../conf/logging.ini', 'conf/logging.ini',
-                    'logging.ini']
-    config_file = None
-    for f in config_files:
-        if os.path.isfile(f):
-            config_file = f
-            break
-    if config_file is None:
-        config_file = config_files[-1]
-        with open(config_file, 'w') as f:
-            f.write('''[loggers]
-keys=root
-
-[handlers]
-keys=consoleHandler
-
-[formatters]
-keys=simpleFormatter
-
-[logger_root]
-level=WARNING
-handlers=consoleHandler
-
-[handler_consoleHandler]
-class=StreamHandler
-level=WARNING
-formatter=simpleFormatter
-args=(sys.stdout,)
-
-[formatter_simpleFormatter]
-format=%(asctime)s - %(name)s - %(levelname)s - %(message)s
-datefmt=
-''')
-    logging.config.fileConfig(config_file)
 
 
 class RuSH:
@@ -95,9 +59,10 @@ class RuSH:
             rules = '\n'.join(rules)
         self.jrush = self.gateway.jvm.edu.utah.bmi.nlp.rush.core.RuSH(rules)
         if enable_logger:
-            initLogger()
+            logger.remove()
+            logger.add(sys.stdout, level="WARNING", format="{time} - {name} - {level} - {message}")
             self.gateway.jvm.py4j.GatewayServer.turnLoggingOn()
-            self.logger = logging.getLogger(__name__)
+            self.logger = logger
         else:
             self.logger = None
         self.min_sent_chars = min_sent_chars
@@ -107,8 +72,9 @@ class RuSH:
         output = [Span(s.getBegin(), s.getEnd()) for s in self.jrush.segToSentenceSpans(text)]
 
         # log important message for debugging use
-        if self.logger is not None and self.logger.isEnabledFor(logging.DEBUG):
-            text = text.replace('\n', ' ')
+        if self.logger is not None:
+            modified_text = text.replace('\n', ' ')
+            self.logger.debug(modified_text)
         if len(output)>0:
             for i, span in enumerate(output):
                 if i==0:
