@@ -85,6 +85,7 @@ setup(
     url='https://github.com/jianlins/py4jrush',  # update to new repo URL
     keywords=['sentence segmentation', 'sentence splitting'],
     long_description=long_description,
+    long_description_content_type='text/markdown',
     package_data={
         'py4jrush': ['lib/*.jar'],
     },
