@@ -85,6 +85,10 @@ setup(
     url='https://github.com/jianlins/py4jrush',  # update to new repo URL
     keywords=['sentence segmentation', 'sentence splitting'],
     long_description=long_description,
+    package_data={
+        'py4jrush': ['lib/*.jar'],
+    },
+    include_package_data=True,
     classifiers=[
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.6',
@@ -102,18 +106,10 @@ setup(
     ],
     license='Apache License',
     zip_safe=False,
-    include_package_data=True,
     install_requires=parse_requirements('requirements.txt'),
     tests_require='pytest',
-    package_data={
-        'py4jrush': [
-            os.path.join('..', 'conf', 'rush_rules.tsv'),
-            os.path.join('..', 'requirements.txt'),
-            os.path.join('..', 'lib', '*.jar')
-        ]
-    },
     cmdclass={
         'install': PostInstallCommand,
-    },
+    }
             # url parameter already set above, remove duplicate
 )

@@ -29,6 +29,7 @@
 # limitations under the License.
 
 from .RuSH import RuSH
+from .Span import Span
 from .version import __version__
 
 
