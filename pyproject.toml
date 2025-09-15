@@ -19,7 +19,7 @@ classifiers = [
 [tool.setuptools.dynamic]
 dependencies = {file = ["requirements.txt"]}
 version={file = "py4jrush/VERSION"}
-readme={file = ['README.rst']}
+readme={file = ['README.MD']}
 
 [project.urls]
 Source = "https://github.com/jianlins/py4jrush"
